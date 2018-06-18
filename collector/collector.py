@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
+
 import argparse
-import io
 import logging
 import datetime
 import socket
@@ -52,6 +53,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--receive_url', type=str, required=True)
     parser.add_argument('--timeout', type=float, default=0.5)
+    parser.add_argument('--ignore_connection_error', action='store_true')
     parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
 
@@ -63,7 +65,14 @@ def main():
     while True:
         message = generate_message()
         logger.debug(f'Posting message {message}')
-        requests.post(args.receive_url, json=message)
+        try:
+            response = requests.post(args.receive_url, json=message)
+            logger.debug(f'Received response: HTTP {response.status_code} {response.content}')
+        except requests.exceptions.ConnectionError as e:
+            if not args.ignore_connection_error:
+                raise e
+            else:
+                logger.warning('ConnectionError ignored')
         time.sleep(args.timeout)
 
 

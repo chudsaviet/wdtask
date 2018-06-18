@@ -27,20 +27,23 @@ public class ReceiverController {
         return valid;
     }
 
-    @PostMapping(name="/receive", consumes={"application/json"})
-    ResponseEntity receive(@RequestBody String payload) throws IOException{
+    @PostMapping(name = "/receive", consumes = {"application/json"})
+    ResponseEntity receive(@RequestBody String payload) throws IOException {
         if (!isValidJSON(payload)) {
             throw new IllegalArgumentException();
         }
         long received_fact = messages_received.incrementAndGet();
-        return new ResponseEntity(String.format("Received message number %d", received_fact), HttpStatus.OK);
+        ObjectNode json = mapper.createObjectNode();
+        json.put("messages_received", received_fact);
+
+        return new ResponseEntity(mapper.writeValueAsString(json), HttpStatus.OK);
     }
 
-    @GetMapping(name="/service_stats")
-    ResponseEntity serviceStats() {
+    @GetMapping(name = "/service_stats")
+    ResponseEntity serviceStats() throws IOException {
         ObjectNode json = mapper.createObjectNode();
         json.put("messages_received", messages_received.get());
-        return new ResponseEntity(json.toString(), HttpStatus.OK);
+        return new ResponseEntity(mapper.writeValueAsString(json), HttpStatus.OK);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
